@@ -34,9 +34,6 @@
         "WRITE_EXTERNAL_STORAGE"
       ]
     },
-    "experiments": {
-      "baseUrl": "/moments-app"
-    },
     "web": {
       "favicon": "./assets/favicon.png",
       "bundler": "metro"
