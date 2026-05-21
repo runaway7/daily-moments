@@ -26,11 +26,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
 
-      - run: npm ci
+      - run: npm install --legacy-peer-deps
 
       - run: npx expo export --platform web
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
 
       - uses: actions/configure-pages@v4
 
