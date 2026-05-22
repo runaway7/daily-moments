@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Alert, Linking, Image } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Alert, Linking, Image, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { CameraView, useCameraPermissions, type CameraType, type FlashMode } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
@@ -35,6 +35,13 @@ export default function NowScreen() {
     { label: '2', value: 0.2 },
   ];
 
+  // Auto-request camera permission on mount
+  useEffect(() => {
+    if (permission && !permission.granted && permission.canAskAgain) {
+      requestPermission();
+    }
+  }, [permission, requestPermission]);
+
   useEffect(() => {
     getMomentsForDayOffset(7).then(setLastWeekMoments);
     getMomentsForDayOffset(30).then(setLastMonthMoments);
@@ -58,7 +65,8 @@ export default function NowScreen() {
     }
   }, [isCapturing, router]);
 
-  if (!permission) {
+  // On web, skip the permission gate — browser handles it natively
+  if (!permission && Platform.OS !== 'web') {
     return (
       <View style={styles.container}>
         <View style={styles.permissionGate}>
@@ -69,7 +77,7 @@ export default function NowScreen() {
     );
   }
 
-  if (!permission.granted) {
+  if (permission && !permission.granted) {
     return (
       <View style={styles.container}>
         <View style={styles.permissionGate}>
