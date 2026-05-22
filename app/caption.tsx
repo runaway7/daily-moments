@@ -21,13 +21,14 @@ export default function CaptionScreen() {
   }, []);
 
   const handleSave = useCallback(async () => {
+    console.log('[caption] handleSave called', { saving, photoUri: !!photoUri });
     if (saving || !photoUri) return;
     setSaving(true);
     try {
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       const momentId = 'm_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
       const permanentUri = await moveToPermanent(photoUri, momentId);
       await createMoment(permanentUri, caption.trim(), emotion, emotionReason.trim(), selectedTags);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       router.replace('/(tabs)');
     } catch (err) {
       console.error('[caption] handleSave error:', err);
