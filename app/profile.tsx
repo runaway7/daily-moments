@@ -51,7 +51,6 @@ export default function ProfileScreen() {
         const dir = new Directory(Paths.document, 'exports');
         dir.create({ intermediates: true });
         const f = new File(dir, 'moments_' + new Date().toISOString().slice(0, 10) + '.md');
-        f.create({ overwrite: true });
         f.write(md);
       } catch {}
       Alert.alert('', '导出成功');

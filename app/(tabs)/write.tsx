@@ -58,7 +58,6 @@ export default function WriteScreen() {
           const textCardDir = new Directory(Paths.document, 'text_cards');
           textCardDir.create({ intermediates: true });
           const cardFile = new File(textCardDir, momentId + '.json');
-          cardFile.create({ overwrite: true });
           cardFile.write(JSON.stringify({ bgColor, text: text.trim() }));
           cardUri = cardFile.uri;
         } catch {
