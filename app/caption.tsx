@@ -29,14 +29,21 @@ export default function CaptionScreen() {
       const permanentUri = await moveToPermanent(photoUri, momentId);
       await createMoment(permanentUri, caption.trim(), emotion, emotionReason.trim(), selectedTags);
       router.replace('/(tabs)');
-    } catch (err) { Alert.alert('保存失败', '请重试'); }
-    finally { setSaving(false); }
+    } catch (err) {
+      console.error('[caption] handleSave error:', err);
+      Alert.alert('保存失败', '请重试');
+    } finally { setSaving(false); }
   }, [saving, photoUri, caption, emotion, emotionReason, selectedTags, router]);
 
   const handleDiscard = useCallback(() => {
+    const doDiscard = async () => { if (photoUri) await deletePhotoFile(photoUri); router.back(); };
+    if (Platform.OS === 'web') {
+      if (window.confirm('舍弃这张照片？照片将被删除且无法恢复')) doDiscard();
+      return;
+    }
     Alert.alert('舍弃这张照片？', '照片将被删除且无法恢复', [
       { text: '取消', style: 'cancel' },
-      { text: '舍弃', style: 'destructive', onPress: async () => { if (photoUri) await deletePhotoFile(photoUri); router.back(); } },
+      { text: '舍弃', style: 'destructive', onPress: doDiscard },
     ]);
   }, [photoUri, router]);
 
@@ -52,7 +59,7 @@ export default function CaptionScreen() {
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Stack.Screen options={{ headerShown: false }} />
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="always" showsVerticalScrollIndicator={false}>
         <View style={styles.photoWrap}>
           <Image source={{ uri: photoUri }} style={styles.photo} resizeMode="contain" />
           <View style={styles.watermark}>

@@ -49,11 +49,13 @@ export default function ProfileScreen() {
       }
       try {
         const dir = new Directory(Paths.document, 'exports');
-        await dir.create({ intermediates: true });
+        dir.create({ intermediates: true });
         const f = new File(dir, 'moments_' + new Date().toISOString().slice(0, 10) + '.md');
-        await f.write(md);
+        f.create({ overwrite: true });
+        f.write(md);
       } catch {}
-      Alert.alert('导出成功', '', [{ text: '确定' }, { text: '分享', onPress: () => Share.share({ message: md }) }]);
+      Alert.alert('', '导出成功');
+      Share.share({ message: md }).catch(() => {});
     } catch (e) { Alert.alert('导出失败'); }
   };
 

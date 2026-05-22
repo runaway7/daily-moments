@@ -16,12 +16,12 @@ function getPhotosDir(): Directory {
   return PHOTOS_DIR!;
 }
 
-async function ensurePhotosDir(): Promise<void> {
+function ensurePhotosDir(): void {
   const dir = getPhotosDir();
   if (!dir || initError) return;
   try {
     if (!dir.exists) {
-      dir.create({ idempotent: true });
+      dir.create({ intermediates: true });
     }
   } catch {}
 }
@@ -29,11 +29,14 @@ async function ensurePhotosDir(): Promise<void> {
 export async function moveToPermanent(tempUri: string, momentId: string): Promise<string> {
   const dir = getPhotosDir();
   if (!dir || initError) return tempUri;
-  await ensurePhotosDir();
+  ensurePhotosDir();
   const ext = tempUri.endsWith('.jpg') ? '.jpg' : '.png';
   const destFile = new File(dir, momentId + ext);
   const tempFile = new File(tempUri);
-  try { await tempFile.move(destFile); } catch { return tempUri; }
+  try {
+    if (destFile.exists) destFile.delete();
+    tempFile.move(destFile);
+  } catch { return tempUri; }
   return destFile.uri;
 }
 
@@ -51,10 +54,13 @@ export async function deletePhotoFile(uri: string): Promise<void> {
 export async function savePhotoFromPicker(assetUri: string, momentId: string): Promise<string> {
   const dir = getPhotosDir();
   if (!dir || initError) return assetUri;
-  await ensurePhotosDir();
+  ensurePhotosDir();
   const destFile = new File(dir, momentId + '.jpg');
   const srcFile = new File(assetUri);
-  try { srcFile.copy(destFile); } catch { return assetUri; }
+  try {
+    if (destFile.exists) destFile.delete();
+    srcFile.copy(destFile);
+  } catch { return assetUri; }
   return destFile.uri;
 }
 
@@ -66,7 +72,7 @@ export function getPhotosDirUri(): string {
 export async function getStorageStats(): Promise<{ photoCount: number; totalSizeMB: number }> {
   const dir = getPhotosDir();
   if (!dir || initError) return { photoCount: 0, totalSizeMB: 0 };
-  await ensurePhotosDir();
+  ensurePhotosDir();
   try {
     const files = dir.list();
     let totalSize = 0;

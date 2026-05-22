@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { Colors, Spacing, Radius, FontSize } from '../src/constants/theme';
@@ -40,7 +40,7 @@ export default function LoginScreen() {
     })();
   }, []);
 
-  const submit = async () => {
+  const submit = useCallback(async () => {
     try {
       if (mode === 'register') {
         if (!nickname.trim()) { Alert.alert('请输入昵称'); return; }
@@ -49,21 +49,25 @@ export default function LoginScreen() {
         if (!question.trim()) { Alert.alert('请选择或输入密保问题'); return; }
         if (!answer.trim()) { Alert.alert('请输入密保答案'); return; }
         await registerAccount(nickname.trim(), password, question.trim(), answer.trim());
-        Alert.alert('注册成功', '请牢记你的密码和密保答案', [{ text: '确定', onPress: () => router.back() }]);
+        Alert.alert('', '注册成功，请牢记你的密码和密保答案');
+        router.back();
       } else if (mode === 'login') {
         const ok = await verifyPassword(password);
-        if (ok) { router.back(); } else { Alert.alert('密码错误'); }
+        if (ok) { router.back(); } else { Alert.alert('', '密码错误'); }
       } else if (mode === 'forgot') {
-        if (password.length < 4) { Alert.alert('新密码至少4位'); return; }
-        if (!answer.trim()) { Alert.alert('请输入密保答案'); return; }
+        if (password.length < 4) { Alert.alert('', '新密码至少4位'); return; }
+        if (!answer.trim()) { Alert.alert('', '请输入密保答案'); return; }
         const ok = await resetPassword(password, answer.trim());
-        if (ok) { Alert.alert('密码已重置', '', [{ text: '确定', onPress: () => { setMode('login'); setPassword(''); setAnswer(''); } }]); }
-        else { Alert.alert('密保答案错误'); }
+        if (ok) {
+          Alert.alert('', '密码已重置');
+          setMode('login'); setPassword(''); setAnswer('');
+        } else { Alert.alert('', '密保答案错误'); }
       }
     } catch (e: any) {
-      Alert.alert('操作失败', e?.message || '请重试');
+      console.error('[login] submit error:', e);
+      Alert.alert('', '操作失败: ' + (e?.message || '请重试'));
     }
-  };
+  }, [mode, nickname, password, confirmPw, question, answer, router]);
 
   if (!ready) {
     return <View style={styles.container}><Stack.Screen options={{ headerShown: true, title: '...', headerStyle: { backgroundColor: Colors.bg }, headerTintColor: Colors.text, headerShadowVisible: false }} /></View>;
@@ -75,7 +79,7 @@ export default function LoginScreen() {
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Stack.Screen options={{ headerShown: true, title, headerStyle: { backgroundColor: Colors.bg }, headerTintColor: Colors.text, headerTitleStyle: { fontWeight: '600', color: Colors.text }, headerShadowVisible: false }} />
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="always">
 
         {/* Nickname — register only */}
         {mode === 'register' && (

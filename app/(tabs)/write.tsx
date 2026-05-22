@@ -56,9 +56,10 @@ export default function WriteScreen() {
         let cardUri = '';
         try {
           const textCardDir = new Directory(Paths.document, 'text_cards');
-          await textCardDir.create({ intermediates: true });
+          textCardDir.create({ intermediates: true });
           const cardFile = new File(textCardDir, momentId + '.json');
-          await cardFile.write(JSON.stringify({ bgColor, text: text.trim() }));
+          cardFile.create({ overwrite: true });
+          cardFile.write(JSON.stringify({ bgColor, text: text.trim() }));
           cardUri = cardFile.uri;
         } catch {
           cardUri = 'data:text/json,' + encodeURIComponent(JSON.stringify({ bgColor, text: text.trim() }));
@@ -69,13 +70,14 @@ export default function WriteScreen() {
       setText(''); setEmotion(null); setEmotionReason(''); setImages([]); setSelectedTags([]);
       router.replace('/(tabs)');
     } catch (err) {
+      console.error('[write] handleSave error:', err);
       Alert.alert('保存失败', '请重试');
     } finally { setSaving(false); }
   }, [saving, text, emotion, emotionReason, images, bgColor, selectedTags, router]);
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="always" showsVerticalScrollIndicator={false}>
         <View style={[styles.textArea, { backgroundColor: bgColor }]}>
           <TextInput
             style={[styles.textInput, { color: bgColor === '#2D2A28' ? '#E8DDD4' : Colors.text }]}

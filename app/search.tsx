@@ -78,7 +78,7 @@ export default function SearchScreen() {
         </View>
       )}
 
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="always" showsVerticalScrollIndicator={false}>
         {!hasSearched ? (
           <View style={styles.empty}><Text style={styles.emptyText}>—</Text></View>
         ) : results.length === 0 ? (

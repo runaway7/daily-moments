@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Image, Alert } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, ScrollView, Image, Alert, Platform } from 'react-native';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { Colors, Spacing, Radius, FontSize } from '../../src/constants/theme';
@@ -22,9 +22,12 @@ export default function MomentDetailScreen() {
 
   const handleEdit = useCallback(() => { setEditText(moment?.caption ?? ''); setEditing(true); }, [moment?.caption]);
   const handleSaveEdit = useCallback(async () => {
-    if (!id) return; await updateCaption(id, editText);
-    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setEditing(false); refresh();
+    if (!id) return;
+    try {
+      await updateCaption(id, editText);
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setEditing(false); refresh();
+    } catch (e) { console.error('[detail] saveEdit error:', e); }
   }, [id, editText, refresh]);
   const handleToggleFavorite = useCallback(async () => {
     if (!id) return; await toggleFavorite(id);
@@ -36,15 +39,30 @@ export default function MomentDetailScreen() {
     await updateTags(moment.id, newTags); refresh();
   }, [moment, refresh]);
   const handleDelete = useCallback(() => {
+    if (!moment) return;
+    const doDelete = async () => {
+      await deleteMoment(moment.id);
+      await deletePhotoFile(moment.photoUri);
+      router.back();
+    };
+    // Web uses browser native confirm dialog
+    if (Platform.OS === 'web') {
+      if (window.confirm('删除这个瞬间？照片和所有文字将被永久删除')) doDelete();
+      return;
+    }
+    // Native uses Alert with custom buttons
     Alert.alert('删除这个瞬间？', '照片和所有文字将被永久删除', [
       { text: '取消', style: 'cancel' },
-      { text: '删除', style: 'destructive', onPress: async () => { if (!moment) return; await deleteMoment(moment.id); await deletePhotoFile(moment.photoUri); router.back(); } },
+      { text: '删除', style: 'destructive', onPress: doDelete },
     ]);
   }, [moment, router]);
   const handleAddNote = useCallback(async () => {
-    if (!id || !newNote.trim()) return; await addAppendNote(id, newNote.trim());
-    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setNewNote(''); setShowNoteInput(false); refresh();
+    if (!id || !newNote.trim()) return;
+    try {
+      await addAppendNote(id, newNote.trim());
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setNewNote(''); setShowNoteInput(false); refresh();
+    } catch (e) { console.error('[detail] addNote error:', e); }
   }, [id, newNote, refresh]);
 
   if (!moment) {
@@ -64,7 +82,7 @@ export default function MomentDetailScreen() {
           </TouchableOpacity>
         ),
       }} />
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="always">
         <Image source={{ uri: moment.photoUri }} style={styles.photo} resizeMode="contain" />
 
         <View style={styles.metaRow}>
